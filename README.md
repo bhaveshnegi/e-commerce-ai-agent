@@ -7,8 +7,8 @@ An AI-powered customer support agent built with **FastAPI**, **AWS Bedrock (Clau
 ## 🧠 Architecture
 
 ```
-User → FastAPI (/chat, /clear) → Agent (AWS Bedrock Claude 3 + Tool Router)
-                                          ↓
+User (Frontend) → FastAPI (/chat, /clear) → Agent (AWS Bedrock Claude 3 + Tool Router)
+                                           ↓
               ┌───────────────────────────┼──────────────────────────┐
               │                           │                          │
         RAG Tool                    Order Tool                Ticket Tool
@@ -20,80 +20,136 @@ User → FastAPI (/chat, /clear) → Agent (AWS Bedrock Claude 3 + Tool Router)
 
 ---
 
+## ✨ New Features
+
+- **Modern Web Interface**: A sleek, dark-themed frontend for real-time interaction.
+- **Persistent AI Memory**: Handles multi-turn conversations seamlessly using session-based memory.
+- **One-Click Deployment**: Pre-built Docker images available on Docker Hub for quick setup.
+- **Integrated RAG**: Instant answers from an FAQ knowledge base powered by Bedrock Titan Embeddings.
+- **Tool Automation**: Automatic routing for Order Tracking and Support Ticket creation.
+
+---
+
 ## 📁 Project Structure
 
 ```
 e-commerce-ai-agent/
 │
-├── app.py                  # FastAPI entry point
+├── app.py                  # FastAPI entry point & API Implementation
 ├── config.py               # Env vars & constants
-├── docker-compose.yml      # Qdrant Docker setup
+├── docker-compose.yml      # Docker setup (Hub images)
 ├── requirements.txt
 ├── .env.example
 │
 ├── agent/
-│   ├── agent.py            # Manual LLM + tool-calling loop
+│   ├── agent.py            # Manual LLM + tool-calling loop (Core Logic)
 │   └── tools.py            # search_faq, track_order, create_support_ticket
 │
+├── frontend/
+│   ├── index.html          # Modern Dark UI
+│   └── Dockerfile          # Nginx static setup
+│
 ├── rag/
-│   ├── embeddings.py       # Bedrock Titan Embeddings V2
-│   ├── qdrant_db.py        # Qdrant client (Docker)
+│   ├── embeddings.py       # Bedrock Titan Embeddings V2 (Vector Setup)
+│   ├── qdrant_db.py        # Qdrant client (Vector Setup)
 │   └── faq_data.py         # 20 FAQ knowledge base entries
 │
 ├── db/
-│   ├── database.py         # SQLite helpers (init, get_order, create_ticket)
+│   ├── database.py         # SQLite schema & helpers
 │   ├── seed_data.py        # 10 sample orders for testing
-│   ├── orders.db           # Auto-created on startup
-│   └── tickets.db          # Auto-created on startup
+│   ├── orders.db           # Auto-created on startup (Relational DB)
+│   └── tickets.db          # Auto-created on startup (Relational DB)
 │
 ├── memory/
 │   └── session.py          # In-memory session store (thread-safe)
 │
 └── models/
-    └── schema.py           # Pydantic request/response schemas
+    └── schema.py           # Pydantic request/response schemas (API Implementation)
 ```
 
 ---
 
-## ⚡ Quick Start
+## 🗄️ Database Schemas
 
-### 1. Prerequisites
-- Python 3.11+
-- Docker Desktop (running)
-- AWS account with Bedrock access
+### 1. Relational Database (SQLite)
+The system uses two SQLite databases:
 
-### 2. Enable AWS Bedrock Models
-In your AWS Console → Bedrock → Model Access, enable:
-- `Claude 3 Sonnet` (`anthropic.claude-3-sonnet-20240229-v1:0`)
-- `Amazon Titan Embeddings V2` (`amazon.titan-embed-text-v2:0`)
+**`orders` table (`orders.db`)**
+| Column          | Type    | Description                |
+|-----------------|---------|----------------------------|
+| `order_id`      | TEXT    | Primary Key (e.g., ORD001) |
+| `mobile`        | TEXT    | Customer mobile number     |
+| `status`        | TEXT    | order status (processing, shipped, etc.) |
+| `product`       | TEXT    | Product name               |
+| `delivery_date` | TEXT    | Estimated delivery date    |
 
-### 3. Clone & Configure
-```bash
-git clone <repo-url>
-cd e-commerce-ai-agent
+**`tickets` table (`tickets.db`)**
+| Column       | Type    | Description                     |
+|--------------|---------|---------------------------------|
+| `ticket_id`  | TEXT    | Primary Key (e.g., TCKTC49B)    |
+| `name`       | TEXT    | Customer name                   |
+| `mobile`     | TEXT    | Customer mobile                 |
+| `issue`      | TEXT    | Detailed issue description      |
+| `order_id`   | TEXT    | Associated Order ID (optional)  |
+| `created_at` | TEXT    | Timestamp                       |
 
-cp .env.example .env
-# Edit .env with your AWS credentials
-```
+### 2. Vector Database (Qdrant)
+- **Collection Name**: `ecommerce_faq`
+- **Vector Size**: `1024` (Titan Embeddings V2)
+- **Payload**: `{ "question": "...", "answer": "..." }`
 
-### 4. Start Qdrant (Docker)
-```bash
-docker compose up -d
-```
 
-### 5. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+---
 
-### 6. Run the Server
-```bash
-uvicorn app:app --reload
-```
+## 🚀 Getting Started
 
-Server starts at `http://localhost:8000`
+> [!IMPORTANT]
+> Before running the application in any mode, ensure you have a `.env` file with **correct AWS credentials**. Copy `.env.example` to `.env` and fill in your keys.
 
-Interactive API docs: `http://localhost:8000/docs`
+### Option 1: One-Click Docker Deployment (Recommended)
+This method uses pre-built images from Docker Hub. You only need Docker and Docker Compose installed.
+
+1. **Configure Environment**:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_REGION
+   ```
+2. **Launch Services**:
+   ```bash
+   docker-compose up -d
+   ```
+3. **Access the App**:
+   - **Frontend**: `http://localhost:5000`
+   - **Backend API**: `http://localhost:8000`
+   - **Interactive Docs**: `http://localhost:8000/docs`
+
+---
+
+### Option 2: Manual Setup (Local Development)
+
+#### 1. Backend Setup
+1. **Prerequisites**: Python 3.11+
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Start Qdrant (Vector DB)**:
+   ```bash
+   docker compose up -d qdrant
+   ```
+4. **Run FastAPI Server**:
+   ```bash
+   uvicorn app:app --reload
+   ```
+
+#### 2. Frontend Setup
+1. **Prerequisites**: Any local web server (Python's `http.server` is easiest).
+2. **Run Frontend**:
+   ```bash
+   cd frontend
+   python -m http.server 5000
+   ```
+3. **Access**: Open `http://localhost:5000` in your browser.
 
 ---
 
@@ -190,6 +246,7 @@ curl http://localhost:8000/health
 
 | Component        | Technology                              |
 |------------------|-----------------------------------------|
+| Frontend         | Modern HTML5/CSS3 + Vanilla JS (Dark UI)|
 | API Framework    | FastAPI + Uvicorn                       |
 | LLM              | AWS Bedrock — Claude 3 Sonnet           |
 | Embeddings       | AWS Bedrock — Amazon Titan Embeddings V2|
