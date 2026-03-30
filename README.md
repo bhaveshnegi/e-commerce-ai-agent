@@ -1,13 +1,10 @@
 # E-Commerce Customer Support AI Agent
-
-An AI-powered customer support agent built with **FastAPI**, **AWS Bedrock (Claude 3 Sonnet)**, **Qdrant (Docker)**, and **SQLite** — featuring RAG-based FAQ answering, Order Tracking, and Support Ticket creation.
-
 ---
 
-## 🧠 Architecture
+## Architecture
 
 ```
-User (Frontend) → FastAPI (/chat, /clear) → Agent (AWS Bedrock Claude 3 + Tool Router)
+User (Frontend) → FastAPI (/chat, /clear) → Agent (AWS Bedrock + Tool Router)
                                            ↓
               ┌───────────────────────────┼──────────────────────────┐
               │                           │                          │
@@ -20,7 +17,7 @@ User (Frontend) → FastAPI (/chat, /clear) → Agent (AWS Bedrock Claude 3 + To
 
 ---
 
-## ✨ New Features
+## Features
 
 - **Modern Web Interface**: A sleek, dark-themed frontend for real-time interaction.
 - **Persistent AI Memory**: Handles multi-turn conversations seamlessly using session-based memory.
@@ -30,7 +27,7 @@ User (Frontend) → FastAPI (/chat, /clear) → Agent (AWS Bedrock Claude 3 + To
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 e-commerce-ai-agent/
@@ -66,8 +63,26 @@ e-commerce-ai-agent/
 └── models/
     └── schema.py           # Pydantic request/response schemas (API Implementation)
 ```
+## Agent Decision Flow
 
+1. User sends message
+2. LLM analyzes intent
+3. Based on intent:
+   - FAQ → calls RAG tool
+   - Order query → calls order tool
+   - Issue → triggers ticket flow
+4. Tool returns result
+5. LLM generates final response
 ---
+
+## Example Conversation
+
+User: Where is my order?
+Agent: Please provide your Order ID and mobile number.
+
+User: ORD001, 9999999999
+Agent: Your order is shipped and will be delivered in 2 days.
+
 
 ## 🗄️ Database Schemas
 
@@ -131,6 +146,8 @@ This method uses pre-built images from Docker Hub. You only need Docker and Dock
 1. **Prerequisites**: Python 3.11+
 2. **Install Dependencies**:
    ```bash
+   Python -m venv .venv
+   .venv\Scripts\activate
    pip install -r requirements.txt
    ```
 3. **Start Qdrant (Vector DB)**:
@@ -248,7 +265,7 @@ curl http://localhost:8000/health
 |------------------|-----------------------------------------|
 | Frontend         | Modern HTML5/CSS3 + Vanilla JS (Dark UI)|
 | API Framework    | FastAPI + Uvicorn                       |
-| LLM              | AWS Bedrock — Claude 3 Sonnet           |
+| LLM              | AWS Bedrock           |
 | Embeddings       | AWS Bedrock — Amazon Titan Embeddings V2|
 | Vector DB        | Qdrant (Docker)                         |
 | Relational DB    | SQLite (orders.db + tickets.db)         |
