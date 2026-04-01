@@ -8,3 +8,4 @@ qdrant-client
 python-dotenv
 pydantic
 langchain-huggingface
+sentence-transformers

@@ -35,11 +35,34 @@ def get_client() -> QdrantClient:
 def init_collection() -> None:
     """
     Create the FAQ collection if it doesn't already exist.
-    Uses cosine similarity with 1024-dimensional Titan vectors.
+    Handles recreation if there's a vector dimension mismatch.
     """
     client = get_client()
-    existing = [c.name for c in client.get_collections().collections]
-    if config.QDRANT_COLLECTION not in existing:
+    try:
+        # Check if collection exists and has the correct dimensions
+        info = client.get_collection(config.QDRANT_COLLECTION)
+        # Handle both single vector and named vectors config
+        if hasattr(info.config.params.vectors, 'size'):
+            existing_size = info.config.params.vectors.size
+        else:
+            # Fallback for complex configs if needed
+            existing_size = None
+
+        if existing_size and existing_size != config.EMBED_DIMENSIONS:
+            print(f"[Qdrant] Dimension mismatch ({existing_size} -> {config.EMBED_DIMENSIONS}). Recreating '{config.QDRANT_COLLECTION}'...")
+            client.delete_collection(config.QDRANT_COLLECTION)
+            # Create fresh
+            client.create_collection(
+                collection_name=config.QDRANT_COLLECTION,
+                vectors_config=VectorParams(
+                    size=config.EMBED_DIMENSIONS,
+                    distance=Distance.COSINE,
+                ),
+            )
+        else:
+            print(f"[Qdrant] Collection '{config.QDRANT_COLLECTION}' ready.")
+    except Exception:
+        # Collection doesn't exist, create it
         client.create_collection(
             collection_name=config.QDRANT_COLLECTION,
             vectors_config=VectorParams(
@@ -47,9 +70,7 @@ def init_collection() -> None:
                 distance=Distance.COSINE,
             ),
         )
-        print(f"[Qdrant] Created collection '{config.QDRANT_COLLECTION}'")
-    else:
-        print(f"[Qdrant] Collection '{config.QDRANT_COLLECTION}' already exists")
+        print(f"[Qdrant] Created collection '{config.QDRANT_COLLECTION}' ({config.EMBED_DIMENSIONS} dims).")
 
 
 def upsert_faq(docs: list[str]) -> None:

@@ -1,40 +1,34 @@
 """
-AWS Bedrock Titan Embeddings V2 wrapper.
-Embeds text into 1024-dimensional vectors.
+Hugging Face Sentence-Transformers Embeddings wrapper.
+Uses local models for generating text vectors.
 """
-import json
-import boto3
+from langchain_huggingface import HuggingFaceEmbeddings
 import config
 
+_embeddings: HuggingFaceEmbeddings | None = None
 
-def _get_bedrock_client():
-    return boto3.client(
-        service_name="bedrock-runtime",
-        region_name=config.AWS_REGION,
-    )
+
+def get_embeddings() -> HuggingFaceEmbeddings:
+    global _embeddings
+    if _embeddings is None:
+        print(f"[Embeddings] Loading HF model: {config.HF_EMBED_MODEL}")
+        _embeddings = HuggingFaceEmbeddings(
+            model_name=config.HF_EMBED_MODEL,
+            model_kwargs={'device': 'cpu'},  # Default to CPU for universal compatibility
+            encode_kwargs={'normalize_embeddings': True}
+        )
+    return _embeddings
 
 
 def embed_text(text: str) -> list[float]:
     """
-    Embed a single text string using Amazon Titan Embeddings V2.
-    Returns a list of 1024 floats.
+    Embed a single text string using a Hugging Face model.
     """
-    client = _get_bedrock_client()
-    body = json.dumps({
-        "inputText": text,
-        "dimensions": config.EMBED_DIMENSIONS,
-        "normalize": True,
-    })
-    response = client.invoke_model(
-        modelId=config.BEDROCK_EMBED_MODEL,
-        contentType="application/json",
-        accept="application/json",
-        body=body,
-    )
-    result = json.loads(response["body"].read())
-    return result["embedding"]
+    return get_embeddings().embed_query(text)
 
 
 def embed_batch(texts: list[str]) -> list[list[float]]:
-    """Embed a list of texts. Returns list of embedding vectors."""
-    return [embed_text(t) for t in texts]
+    """
+    Embed a list of texts. Returns a list of embedding vectors.
+    """
+    return get_embeddings().embed_documents(texts)
