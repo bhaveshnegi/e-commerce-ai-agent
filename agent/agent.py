@@ -1,7 +1,7 @@
 import re
 import json
-from langchain_aws import ChatBedrock
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
+import llm
 
 import config
 from memory import session
@@ -41,10 +41,7 @@ Issue: [description of the issue or None]
 class EcommerceAgent:
 
     def __init__(self):
-        self.llm = ChatBedrock(
-            model_id=config.BEDROCK_LLM_MODEL,
-            region_name=config.AWS_REGION,
-        )
+        self.llm = llm.get_llm()
 
     def _parse_routing(self, raw: str):
         """Helper to parse the router LLM's plain-text output into a dict with strict validation."""

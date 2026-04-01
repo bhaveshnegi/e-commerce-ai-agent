@@ -54,7 +54,7 @@ app = FastAPI(
     description=(
         "An AI-powered customer support agent with RAG (Qdrant), "
         "Order Tracking (SQLite), and Ticket Creation (SQLite), "
-        "powered by AWS Bedrock Claude 3 Sonnet."
+        "powered by dynamic LLM providers (AWS Bedrock / Hugging Face)."
     ),
     version="1.0.0",
     lifespan=lifespan,
