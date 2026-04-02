@@ -46,11 +46,11 @@ def get_llm():
         #     max_new_tokens=1024,
         # )
         llm = HuggingFaceEndpoint(
-            repo_id="Qwen/Qwen2.5-Coder-32B-Instruct",
+            repo_id="mistralai/Mistral-7B-Instruct-v0.2:featherless-ai",
             temperature=0.3,
             max_new_tokens=512,
             huggingfacehub_api_token=hf_token,
         )
         model_base = ChatHuggingFace(llm=llm)
-        print(f"--- LLM initialized with Hugging Face (Qwen/Qwen2.5-Coder-32B-Instruct) ---")
+        print(f"--- LLM initialized with Hugging Face---")
         return model_base
